@@ -1,14 +1,16 @@
 # Klantroef - Media Streaming Platform
 
-A Node.js Express application for managing and streaming media assets with secure authentication and temporary streaming URLs.
+A Node.js Express application for managing and streaming media assets with secure authentication, temporary streaming URLs, and comprehensive analytics tracking.
 
 ## Features
 
 - **User Authentication**: Secure signup/login with JWT tokens
 - **Media Management**: Add and manage video/audio assets
 - **Secure Streaming**: Generate temporary 10-minute streaming URLs
-- **View Logging**: Track media views by IP address
+- **View Logging**: Track media views by IP address and timestamp
+- **Analytics Dashboard**: Comprehensive analytics with views per day and unique IP tracking
 - **SQLite Database**: Lightweight database with proper indexing
+- **JWT Protection**: All sensitive routes protected with authentication middleware
 
 ## Database Schema
 
@@ -44,6 +46,38 @@ A Node.js Express application for managing and streaming media assets with secur
 - `GET /media/:id/stream-url` - Generate secure streaming URL
 - `GET /media/stream/:streamId` - Access media via streaming URL
 
+### Analytics & Tracking
+- `POST /media/:id/view` - Log a view (IP + timestamp)
+- `GET /media/:id/analytics` - Get comprehensive analytics data (authenticated)
+
+## Analytics Data
+
+The analytics endpoint returns detailed information about media performance:
+
+```json
+{
+  "media": {
+    "id": 1,
+    "title": "Sample Video"
+  },
+  "analytics": {
+    "total_views": 174,
+    "unique_ips": 122,
+    "views_per_day": {
+      "2025-08-01": 34,
+      "2025-08-02": 56
+    },
+    "top_viewing_ips": [
+      {
+        "viewed_by_ip": "192.168.1.100",
+        "view_count": 15
+      }
+    ],
+    "last_updated": "2025-08-17T11:02:11.970Z"
+  }
+}
+```
+
 ## Setup Instructions
 
 ### 1. Install Dependencies
@@ -69,6 +103,9 @@ npm run dev
 
 # Production mode
 npm start
+
+# Or use the startup script
+./start.sh
 ```
 
 The server will start on port 3000 (or the port specified in your .env file).
@@ -97,24 +134,44 @@ curl -X POST http://localhost:3000/media \
   -d '{"title": "Sample Video", "type": "video", "file_url": "https://example.com/video.mp4"}'
 ```
 
-### 4. Generate Streaming URL
+### 4. Log a View
+```bash
+curl -X POST http://localhost:3000/media/1/view \
+  -H "Content-Type: application/json"
+```
+
+### 5. Get Analytics
+```bash
+curl http://localhost:3000/media/1/analytics \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+### 6. Generate Streaming URL
 ```bash
 curl http://localhost:3000/media/1/stream-url
 ```
 
-### 5. Access Media via Streaming URL
+## Testing
+
+### Basic API Tests
 ```bash
-curl http://localhost:3000/media/stream/GENERATED_STREAM_ID
+node test-api.js
+```
+
+### Analytics Tests
+```bash
+node test-analytics.js
 ```
 
 ## Security Features
 
-- **JWT Authentication**: Secure token-based authentication
+- **JWT Authentication**: Secure token-based authentication for all protected routes
 - **Password Hashing**: Bcrypt with salt rounds
 - **Rate Limiting**: Prevents abuse with request limits
 - **Helmet**: Security headers for Express
 - **CORS**: Configurable cross-origin resource sharing
 - **Input Validation**: Comprehensive request validation
+- **Route Protection**: Analytics and media management routes require authentication
 
 ## Production Considerations
 
@@ -125,6 +182,7 @@ curl http://localhost:3000/media/stream/GENERATED_STREAM_ID
 - **Environment Variables**: Use proper secret management
 - **Logging**: Implement comprehensive logging and monitoring
 - **Backup**: Regular database backups
+- **IP Tracking**: Consider GDPR compliance for IP address logging
 
 ## Development
 
@@ -137,10 +195,13 @@ klantroef/
 │   └── auth.js          # JWT authentication middleware
 ├── routes/
 │   ├── auth.js          # Authentication routes
-│   └── media.js         # Media management routes
+│   └── media.js         # Media management and analytics routes
 ├── server.js            # Main server file
 ├── package.json         # Dependencies and scripts
 ├── env.example          # Environment variables template
+├── test-api.js          # Basic API tests
+├── test-analytics.js    # Analytics API tests
+├── start.sh             # Startup script
 └── README.md            # This file
 ```
 
@@ -153,6 +214,7 @@ You can test the API endpoints using tools like:
 - Postman
 - Insomnia
 - Any HTTP client
+- The provided test scripts
 
 ## License
 
